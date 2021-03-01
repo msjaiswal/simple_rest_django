@@ -40,12 +40,11 @@ def mysql_readdict(query):
         desc = cursor.description 
         ret = []
         for row in cursor.fetchall():
-            print("row", row)
             ret.append( dict(zip(desc, row)))
         return ret
 
 def mysql_write(query):
-    print("query:", query)
+#    print("query:", query)
     with connection.cursor() as cursor:
         ret = cursor.execute(query)
     return ret
@@ -72,23 +71,18 @@ def test(request):
     ret = {}
     ret['status'] = "0"
     ret['response'] = mysql_read("select name, id from users")
-    print(ret)
     return JsonResponse(ret)
 
 
 @csrf_exempt
 def add(request):
-    print("== add == ")
     if request.method == 'GET':
         req = dict(request.GET)
     elif request.method == 'POST':
         req = dict(request.POST)
 
-    print(req)
     name = req['name'][0]
     q = "insert into users (name) values('%s')" % name  
-    print(q)
-    print("Writeresponse:", mysql_write(q))
     ret = {"hello": 123}
     return JsonResponse(ret)
 
@@ -107,6 +101,7 @@ def create_transaction(request):
     elif request.method == 'POST':
         req = dict(request.POST)
 
+
     users = parse_arguments(req['users'][0], str)
     assert('percentage_share' in req) or ('share' in req), "share and percentage_share both missing" 
     
@@ -114,7 +109,7 @@ def create_transaction(request):
     share = None
     percentage_share = None
 
-    if percentage_share in req:
+    if 'percentage_share' in req:
         percentage_share = parse_arguments(req['percentage_share'][0], float)
     else:
         share = parse_arguments(req['share'][0], float)
@@ -127,11 +122,10 @@ def create_transaction(request):
     return JsonResponse({"status": "OK"})
 
 def create_txn(users,percentage_share,paids, _type='transaction'):
-    print("users, percentage_share, paids", users, percentage_share, paids)
+#    print("users, percentage_share, paids", users, percentage_share, paids)
     expense = sum(paids)
     assert sum(percentage_share) == 100, "sum of percent = %s"% sum(percentage_share)
     tid = uuid.uuid1().hex
-    print("Transaction ID:", tid)
     for user, perc, paid in zip(users,percentage_share, paids):
         owes = -1 *( paid - perc/100 * expense)
         mysql_write(f"insert into transactions set uid = '{user}', tid = '{tid}', owes= {owes}, expense = {expense}, paid= {paid}, type='{_type}'")
@@ -140,7 +134,6 @@ def create_txn(users,percentage_share,paids, _type='transaction'):
 
 @csrf_exempt
 def settle(request):
-    print("settle==")
     if request.method == 'GET':
         req = dict(request.GET)
     elif request.method == 'POST':
@@ -148,7 +141,6 @@ def settle(request):
 
     users = parse_arguments(req['users'][0], str)
     u1, u2 = users
-    print(u1, u2)
 
     assert u1
     assert u2
@@ -161,13 +153,12 @@ def settle(request):
         group by uid;
     """
 
-    print(query)
+#    print(query)
     ret = mysql_read(query)
-    print(ret)
+#    print(ret)
     msg = ""
     for row in ret:
         amt, usr = row
-        print("amt, usr", amt, usr)
         if amt > 0:
             # u2 owes u1
             create_txn([u1,u2], [100,0], [0,amt], _type="settlement")
@@ -186,7 +177,6 @@ def settle(request):
 @csrf_exempt
 @exception_handler
 def view_balances(request):
-    print("settle==")
     if request.method == 'GET':
         req = dict(request.GET)
     elif request.method == 'POST':
@@ -196,7 +186,7 @@ def view_balances(request):
     u1 = users[0]
 
     assert u1
-    raise Exception("Dummy exception")
+    #raise Exception("Dummy exception")
 
     query = f"""
     Select sum(owes), uid 
@@ -206,7 +196,6 @@ def view_balances(request):
         group by uid;
     """
 
-    print(query)
     ret = mysql_read(query)
 
     return JsonResponse({"status": "OK", "response": ret, 'query': query  })
