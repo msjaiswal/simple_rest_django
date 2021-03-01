@@ -29,6 +29,9 @@ urlpatterns = [
     #path('', include(router.urls)),
     path('test/', views.test),
     path('add/', views.add),
+    path('create_transaction/', views.create_transaction),
+    path('settle/', views.settle),
+    path('view_balances/', views.view_balances),
     #path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
 
