@@ -12,6 +12,7 @@ import traceback
 from django.db import connection
 
 DEBUG = True
+#DEBUG = False
 
 def exception_handler(function):
     def wrapper(*args, **kwargs):
@@ -65,7 +66,7 @@ def sample_api(request):
     return JsonResponse({"status": "OK", "response": ret})
 
 
-
+ # ============================== Old Code Below ============================
 @csrf_exempt
 def test(request):
     ret = {}
